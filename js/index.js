@@ -46,6 +46,12 @@ let snake = {
     route: 'right',
     canChangeRoute: true,
     isAlive: true,
+    colorHead: "rgb(130, 0, 0)",
+    colorTail: '#2eb9d4c9',
+    constructor() {
+        this.coordinates.x[0] = 0;
+        this.coordinates.y[0] = 0;
+    },
     checkCageIsOccupied(x, y) {
         for (let i = 1; i < this.coordinates.x.length; i++) {
             if (x === this.coordinates.x[i] && y === this.coordinates.y[i]) {
@@ -53,10 +59,28 @@ let snake = {
             }
         }
         return false;
+    },
+    checkDeath() {
+        if (this.checkCageIsOccupied(this.coordinates.x[0], this.coordinates.y[0])) {
+            alert('You are dead');
+            return true;
+        } else {
+            return false;
+        }
+    },
+    move() {
+        for (let i = this.coordinates.x.length - 1; i > 0; i--) {
+            this.coordinates.x[i] = this.coordinates.x[i - 1];
+            this.coordinates.y[i] = this.coordinates.y[i - 1];
+        }
+
+        if (this.route == 'left')   this.coordinates.x[0]--;
+        if (this.route == 'right')  this.coordinates.x[0]++;
+        if (this.route == 'up')     this.coordinates.y[0]--;
+        if (this.route == 'down')   this.coordinates.y[0]++;
     }
 }
-snake.coordinates.x[0] = 0;
-snake.coordinates.y[0] = 0;
+snake.constructor();
 
 class FOOD {
     coordinates = {
@@ -95,13 +119,13 @@ function step() {
     }
 
     //draw snake
-    ctx.fillStyle = 'rgb(130, 0, 0)';
+    ctx.fillStyle = snake.colorHead;
     ctx.beginPath();
-    ctx.arc(snake.coordinates.x[0] * size + size / 2, snake.coordinates.y[0] * size + size / 2, size / 2, 0, Math.PI * 2)
+        ctx.arc(snake.coordinates.x[0] * size + size / 2, snake.coordinates.y[0] * size + size / 2, size / 2, 0, Math.PI * 2)
     ctx.fill();
 
     //draw tail
-    ctx.fillStyle = '#2eb9d4c9';
+    ctx.fillStyle = snake.colorTail;
     for (let i = 1; i < snake.coordinates.x.length; i++) {
         ctx.fillRect(snake.coordinates.x[i] * size, snake.coordinates.y[i] * size, size, size)
     }
@@ -120,22 +144,11 @@ function step() {
         }
     }
 
-    //tail move
-    for (let i = snake.coordinates.x.length - 1; i > 0; i--) {
-        snake.coordinates.x[i] = snake.coordinates.x[i - 1];
-        snake.coordinates.y[i] = snake.coordinates.y[i - 1];
-    }
+    snake.move()
 
-    //move
-    if (snake.route == 'left') snake.coordinates.x[0]--;
-    if (snake.route == 'right') snake.coordinates.x[0]++;
-    if (snake.route == 'up') snake.coordinates.y[0]--;
-    if (snake.route == 'down') snake.coordinates.y[0]++;
-
-    //death
-    if (snake.checkCageIsOccupied(snake.coordinates.x[0], snake.coordinates.y[0])) {
-            alert('You are dead');
-    }
+    snake.checkDeath()
+        
+    
 
     //wall
     if (snake.coordinates.x[0] >= Math.floor(width / size)) snake.coordinates.x[0] = 0;
