@@ -37,8 +37,6 @@ function rand(min, max) {
 
 const img_food = new Image();
 img_food.src = './images/food.png';
-const img_skin = new Image();
-img_skin.src = './images/skin.jpg';
 
 let snake = {
     coordinates: {
@@ -48,11 +46,17 @@ let snake = {
     route: 'right',
     canChangeRoute: true,
     isAlive: true,
+    checkCageIsOccupied(x, y) {
+        for (let i = 1; i < this.coordinates.x.length; i++) {
+            if (x === this.coordinates.x[i] && y === this.coordinates.y[i]) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
-snake.coordinates.x[0] = 2;
-snake.coordinates.y[0] = 2;
-snake.coordinates.x[1] = 1;
-snake.coordinates.y[1] = 2;
+snake.coordinates.x[0] = 0;
+snake.coordinates.y[0] = 0;
 
 class FOOD {
     coordinates = {
@@ -65,6 +69,9 @@ class FOOD {
     change() {
         this.coordinates.x = rand(0, (width - size) / size);
         this.coordinates.y = rand(0, (height - size) / size);
+        if (snake.checkCageIsOccupied(this.coordinates.x, this.coordinates.y)) {
+            this.change()
+        }
     }
 }
 
@@ -74,7 +81,7 @@ for (let i = 0; i < count_food; i++) {
 }
 
 function step() {
-    //ИГРОВОЕ ПОЛЕ
+    //draw map
     for (let i = 0; i < Math.floor(height / size); i++) {
         for (let j = 0; j < Math.floor(width / size); j++) {
             if (j % 2 + i % 2 == 1) {
@@ -87,24 +94,24 @@ function step() {
         }
     }
 
-    //ЗМЕЙКА (голова)
+    //draw snake
     ctx.fillStyle = 'rgb(130, 0, 0)';
     ctx.beginPath();
     ctx.arc(snake.coordinates.x[0] * size + size / 2, snake.coordinates.y[0] * size + size / 2, size / 2, 0, Math.PI * 2)
     ctx.fill();
 
-    //хвост
-    ctx.fillStyle = 'rgb(207, 143, 40)';
+    //draw tail
+    ctx.fillStyle = '#2eb9d4c9';
     for (let i = 1; i < snake.coordinates.x.length; i++) {
-        ctx.drawImage(img_skin, snake.coordinates.x[i] * size, snake.coordinates.y[i] * size, size, size)
+        ctx.fillRect(snake.coordinates.x[i] * size, snake.coordinates.y[i] * size, size, size)
     }
 
-    //ЕДА
+    //draw food
     for (let i = 0; i < food.length; i++) {
-        ctx.drawImage(img_food, food[i].coordinates.x * size, food[i].coordinates.y * size, size, size)
+        ctx.drawImage(img_food, food[i].coordinates.x * size + 3, food[i].coordinates.y * size + 3, size - 3, size - 3)
     }
 
-    //ПОЕДАНИЕ
+    //eat
     for (let i = 0; i < food.length; i++) {
         if (snake.coordinates.x[0] == food[i].coordinates.x && snake.coordinates.y[0] == food[i].coordinates.y) {
             food[i].change();
@@ -113,44 +120,40 @@ function step() {
         }
     }
 
-    //ПЕРЕДВИЖЕНИЕ ХВОСТА
+    //tail move
     for (let i = snake.coordinates.x.length - 1; i > 0; i--) {
         snake.coordinates.x[i] = snake.coordinates.x[i - 1];
         snake.coordinates.y[i] = snake.coordinates.y[i - 1];
     }
 
-    //ПЕРЕДВИЖЕНИЕ ЗМЕЙКИ
+    //move
     if (snake.route == 'left') snake.coordinates.x[0]--;
     if (snake.route == 'right') snake.coordinates.x[0]++;
     if (snake.route == 'up') snake.coordinates.y[0]--;
     if (snake.route == 'down') snake.coordinates.y[0]++;
-    //СМЕРТЬ
-    for (let i = 1; i < snake.coordinates.x.length; i++) {
-        if (snake.coordinates.x[i] == snake.coordinates.x[0] 
-            && snake.coordinates.y[i] == snake.coordinates.y[0] ) {
-                snake.isAlive = false;
-                alert('You are dead');
-            } 
+
+    //death
+    if (snake.checkCageIsOccupied(snake.coordinates.x[0], snake.coordinates.y[0])) {
+            alert('You are dead');
     }
 
-    //СТЕНКИ
+    //wall
     if (snake.coordinates.x[0] >= Math.floor(width / size)) snake.coordinates.x[0] = 0;
     if (snake.coordinates.x[0] < 0) snake.coordinates.x[0] = Math.floor(width / size) - 1;
     if (snake.coordinates.y[0] >= Math.floor(height / size)) snake.coordinates.y[0] = 0;
     if (snake.coordinates.y[0] < 0) snake.coordinates.y[0] = Math.floor(height / size) - 1;
 
-    snake.canChangeRoute = true;   //разрешения изменять направление
-    
+    snake.canChangeRoute = true;
+
     if (snake.isAlive) {
         setTimeout(() => {
             requestAnimationFrame(step);
-        }, 70) 
+        }, 70)
     }
 }
 
 step();
 
-//ОБРАБОТКА НАЖАТИЙ
 document.addEventListener("keydown", e => {
     if (snake.canChangeRoute) {
         if ((e.code === "ArrowLeft" || e.code === "KeyA") && snake.route != 'right') snake.route = "left";
